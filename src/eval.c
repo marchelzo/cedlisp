@@ -176,7 +176,7 @@ result_t eval_program(object_t **program)
       return result;
     }
     
-    *program += 1;
+    program += 1;
   }
 
   return result;
