@@ -1,0 +1,2 @@
+# cedlisp
+`make && ./ced four`
