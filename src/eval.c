@@ -6,13 +6,6 @@
 #include "value.h"
 #include "environment.h"
 
-#define ERROR(msg) result.type = ERR; \
-                   result.result.error = msg; \
-		   return result;
-
-#define OKAY(val) result.type = OK; \
-                  result.result.value = (val); \
-		  return result;
 
 const char *keywords[] = {
   "fn",
@@ -97,6 +90,7 @@ result_t eval_keyword(const char *kw, object_t *args, environment_t *env)
     fn->type = ATOM;
     fn->value.atom.type = FUNCTION;
     fn->value.atom.value.function.argc = 0;
+    fn->value.atom.value.function.builtin = NULL;
 
     if (args->type != CONS) {
       free(fn);
@@ -110,7 +104,7 @@ result_t eval_keyword(const char *kw, object_t *args, environment_t *env)
       if (arg == &nil) break;
       if (arg->type != CONS) { free(fn); ERROR("Invalid syntax in argument list of anonymous function"); }
       if (arg->value.cons.car->type != ATOM || arg->value.cons.car->value.atom.type != IDENTIFIER) { free(fn); ERROR("Non-identifier in argument list of anonymous function expression"); }
-      fn->value.atom.value.function.argv[fn->value.atom.value.function.argc++] = arg->value.atom.value.identifier;
+      fn->value.atom.value.function.argv[fn->value.atom.value.function.argc++] = arg->value.cons.car->value.atom.value.identifier;
       arg = arg->value.cons.cdr;
     }
 
@@ -132,8 +126,12 @@ result_t eval_keyword(const char *kw, object_t *args, environment_t *env)
 
 result_t eval_function(object_t *fn, object_t *args, environment_t *env)
 {
-  result_t result;
+
+  if (fn->value.atom.value.function.builtin)
+    return fn->value.atom.value.function.builtin(args, env);
   
+  result_t result;
+
   /* parse and evaluate the arguments to the function */
   size_t n = 0; /* number of arguments */
   size_t argc = fn->value.atom.value.function.argc; /* number of required arguments */
@@ -158,6 +156,8 @@ result_t eval_program(object_t **program)
   result_t result;
 
   environment_t *env = env_new(NULL);
+
+  insert_builtins(env);
 
   if (!env) {
     ERROR("Failed to allocate an environment!");

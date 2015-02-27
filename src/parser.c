@@ -95,13 +95,12 @@ object_t *parse_object(const char **source)
       case '"': {
 	*source += 1;
 	obj->value.atom.type = STRING;
-	if (parse_string(&obj->value.atom.value.string, source)) {
-	  break;
-	} else {
+	if (!parse_string(&obj->value.atom.value.string, source)) {
 	  goto err;
 	}
 	if (**source != '"') goto err;
 	*source += 1;
+	return obj;
       }
       case '\'': {
 	*source += 1;
@@ -158,6 +157,9 @@ object_t **parse_program(const char *source)
 
   while (*source) {
     program[n++] = parse_object(&source);
+
+    /* skip whitespace */
+    while (*source && isspace(*source)) ++source;
 
     if (n == objects_allocated) {
       objects_allocated *= 2;

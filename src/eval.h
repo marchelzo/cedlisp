@@ -2,7 +2,15 @@
 
 #include "value.h"
 
-typedef struct {
+#define ERROR(msg) result.type = ERR; \
+                   result.result.error = msg; \
+		   return result;
+
+#define OKAY(val) result.type = OK; \
+                  result.result.value = (val); \
+		  return result;
+
+typedef struct result {
   enum {
     OK,
     ERR

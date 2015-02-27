@@ -6,13 +6,15 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include "builtins.h"
+
 struct environment;
 struct object;
 
 typedef struct {
   uint8_t argc;
   char *argv[ARGC_MAX];
-  bool builtin;
+  builtin_function builtin;
   struct environment *env;
   struct object *body;
 } function_t;
