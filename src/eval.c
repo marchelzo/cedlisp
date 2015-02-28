@@ -6,10 +6,10 @@
 #include "value.h"
 #include "environment.h"
 
+environment_t *global_env = NULL;
 
 const char *keywords[] = {
   "fn",
-  "if",
   "seq"
 };
 
@@ -128,26 +128,29 @@ result_t eval_function(object_t *fn, object_t *args, environment_t *env)
 {
 
   if (fn->value.atom.value.function.builtin)
-    return fn->value.atom.value.function.builtin(args, env);
+    return fn->value.atom.value.function.builtin(args, env, global_env);
   
   result_t result;
 
   /* parse and evaluate the arguments to the function */
   size_t n = 0; /* number of arguments */
   size_t argc = fn->value.atom.value.function.argc; /* number of required arguments */
+
+  environment_t *call_env = env_new(fn->value.atom.value.function.env);
+  
   while (1) {
     if (args == &nil) break;
     if (n > argc) { ERROR("Too many arguments in function call"); }
     result_t arg = eval(args->value.cons.car, env);
     if (arg.type == ERR) { return arg; }
-    env_insert(fn->value.atom.value.function.env, fn->value.atom.value.function.argv[n], arg.result.value);
+    env_update_or_insert_local(call_env, fn->value.atom.value.function.argv[n], arg.result.value);
     args = args->value.cons.cdr;
     n += 1;
   }
 
   if (n != argc) { ERROR("Too few arguments in function call"); }
 
-  return eval(fn->value.atom.value.function.body, fn->value.atom.value.function.env);
+  return eval(fn->value.atom.value.function.body, call_env);
 }
 
 
@@ -155,14 +158,14 @@ result_t eval_program(object_t **program)
 {
   result_t result;
 
-  environment_t *env = env_new(NULL);
+  global_env = env_new(NULL);
 
-  insert_builtins(env);
-
-  if (!env) {
+  if (!global_env) {
     ERROR("Failed to allocate an environment!");
   }
-  
+
+  insert_builtins(global_env);
+
 
   if (!*program || !program) {
     ERROR("Nothing to evaluate!")
@@ -170,7 +173,7 @@ result_t eval_program(object_t **program)
   
   while (*program) {
 
-    result = eval(*program, env);
+    result = eval(*program, global_env);
 
     if (result.type == ERR) {
       return result;
@@ -181,4 +184,3 @@ result_t eval_program(object_t **program)
 
   return result;
 }
-

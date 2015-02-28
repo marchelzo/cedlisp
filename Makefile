@@ -2,10 +2,18 @@ SOURCES := $(wildcard src/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
 CC := clang
-CCFLAGS := -std=c99 -g -Wall -Wextra -pedantic -O0
+CFLAGS := -std=c99 -g -Wall -Wextra -pedantic
+
+all: ced
+
+release: CFLAGS += -O2
+release: ced
 
 ced: $(OBJECTS)
-	$(CC) $(CCFLAGS) -o $@ $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS)
+
+clean: $(OBJECTS)
+	rm src/*.o
 
 %.o : %.c
-	$(CC) $(CCFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<

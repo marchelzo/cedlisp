@@ -9,6 +9,11 @@ static bool parse_string(char **, const char **);
 static object_t *parse_object(const char **);
 static object_t *parse_list(const char **);
 
+static inline void skip_spaces(const char **s)
+{
+  while (isspace(**s)) ++(*s);
+}
+
 bool parse_string(char **dst, const char **src)
 {
   size_t bytes_allocated = 1;
@@ -61,8 +66,8 @@ object_t *parse_list(const char **source)
     free(list);
     return &nil;
   }
-  if (**source == ' ') {
-    *source += 1;
+  if (isspace(**source)) {
+    skip_spaces(source);
     list->value.cons.cdr = parse_list(source);
   } else {
     list->value.cons.cdr = &nil;
@@ -80,11 +85,11 @@ object_t *parse_object(const char **source)
     obj->type = CONS;
     obj->value.cons.car = parse_object(source);
     if (!obj->value.cons.car) goto err;
-    if (**source == ' ') {
-      *source += 1;
+    if (isspace(**source)) {
+      skip_spaces(source);
       obj->value.cons.cdr = parse_list(source);
     } else {
-      obj->value.cons.cdr = NULL;
+      obj->value.cons.cdr = &nil;
     }
     if (**source != ')') goto err;
     *source += 1;
@@ -131,7 +136,7 @@ object_t *parse_object(const char **source)
 	} else {
 	  obj->value.atom.type = IDENTIFIER;
 	  const char *s = *source;
-	  while (*s && *s != ' ' && *s != '(' && *s != ')') ++s;
+	  while (*s && !isspace(*s) && *s != '(' && *s != ')') ++s;
 	  if (s == *source) goto err;
 	  size_t len = s - *source;
 	  obj->value.atom.value.identifier = malloc(len + 1);

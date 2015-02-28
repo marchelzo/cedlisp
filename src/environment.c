@@ -40,10 +40,12 @@ environment_t *env_new(environment_t *parent)
 
 object_t *env_lookup(environment_t *env, const char *id)
 {
+  if (!env) return NULL;
+  
   for (size_t i = 0; i < env->size; ++i)
     if (strcmp(env->keys[i], id) == 0)
       return env->values[i];
-  return NULL;
+  return env_lookup(env->parent, id);
 }
 
 void env_insert(environment_t *env, const char *id, object_t *val)
@@ -67,4 +69,15 @@ void env_update(environment_t *env, const char *id, object_t *val)
     }
     env = env->parent;
   }
+}
+
+void env_update_or_insert_local(environment_t *env, const char *id, object_t *val)
+{
+  for (size_t i = 0; i < env->size; ++i) {
+    if (strcmp(env->keys[i], id) == 0) {
+      env->values[i] = val;
+      return;
+    }
+  }
+  env_insert(env, id, val);
 }
