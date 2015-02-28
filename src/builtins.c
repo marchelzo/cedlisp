@@ -107,31 +107,47 @@ static result_t new_boolean(bool b)
 
 static void print_object(object_t *obj)
 {
-    if (obj->type == CONS) {
-      putchar('(');
-      putchar(')');
-    } else {
-      switch (obj->value.atom.type) {
+  static bool inspect_quoted = true;
+  
+  if (obj->type == CONS) {
+  
+    putchar('(');
+    while (obj != &nil) {
+      print_object(obj->value.cons.car);
+      if (obj->value.cons.cdr != &nil)
+  	putchar(' ');
+      obj = obj->value.cons.cdr;
+    }
+    putchar(')');
+  
+  } else {
+    switch (obj->value.atom.type) {
       case FUNCTION:
-	fputs("<#PROC#>", stdout);
-	break;
+        fputs("<#PROC#>", stdout);
+        break;
       case STRING:
-	fputs(obj->value.atom.value.string, stdout);
-	break;
+        fputs(obj->value.atom.value.string, stdout);
+        break;
       case INTEGER:
-	printf("%"PRIi64, obj->value.atom.value.integer);
-	break;
+        printf("%"PRIi64, obj->value.atom.value.integer);
+        break;
       case REAL:
-	printf("%f", obj->value.atom.value.real);
-	break;
+        printf("%f", obj->value.atom.value.real);
+        break;
       case BOOLEAN:
-	fputs(obj->value.atom.value.boolean ? "t" : "f", stdout);
-	break;
-      case QUOTED:
-	fputs("<#CODE#>", stdout);
+        fputs(obj->value.atom.value.boolean ? "t" : "f", stdout);
+        break;
+      case QUOTED: {
+        if (inspect_quoted) {
+	  inspect_quoted = false;
+	  print_object(obj->value.atom.value.quoted);
+	} else {
+	    fputs("<#CODE#>", stdout);
+	}
 	break;
       }
     }
+  }
 }
 
 static result_t builtin_equal(object_t *args, environment_t *env, environment_t *global)
@@ -232,6 +248,7 @@ object_t _builtin_equal      = { .type = ATOM, .value = { .atom = { .type = FUNC
 
 void insert_builtins(struct environment *env)
 {
+  env_insert(env, "nil", &nil);
   env_insert(env, "+", &_builtin_add);
   env_insert(env, "-", &_builtin_subtract);
   env_insert(env, "*", &_builtin_multiply);

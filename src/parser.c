@@ -83,6 +83,13 @@ object_t *parse_object(const char **source)
   if (**source == '(') {
     *source += 1;
     obj->type = CONS;
+
+    if (**source == ')') {
+      free(obj);
+      *source += 1;
+      return &nil;
+    }
+    
     obj->value.cons.car = parse_object(source);
     if (!obj->value.cons.car) goto err;
     if (isspace(**source)) {
