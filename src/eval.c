@@ -23,6 +23,18 @@ object_t nil = {
   }
 };
 
+object_t quoted_nil = {
+  .type = ATOM,
+  .value = {
+    .atom = {
+      .type = QUOTED,
+      .value = {
+	.quoted = &nil
+      }
+    }
+  }
+};
+
 
 bool is_keyword(const char *word)
 {

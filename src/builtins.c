@@ -105,6 +105,27 @@ static result_t new_boolean(bool b)
   OKAY(boolean);
 }
 
+static result_t new_cons(object_t *car, object_t *cdr)
+{
+  result_t result;
+
+  object_t *value = malloc(sizeof *value); /* quoted container */
+  if (!value) { ERROR("Out of memory!"); }
+
+  object_t *cons = malloc(sizeof *cons); /* the unquoted cons cell */
+  if (!cons) { ERROR("Out of memory!"); }
+
+  cons->type = CONS;
+  cons->value.cons.car = car;
+  cons->value.cons.cdr = cdr;
+
+  value->type = ATOM;
+  value->value.atom.type = QUOTED;
+  value->value.atom.value.quoted = cons;
+
+  OKAY(value);
+}
+
 static void print_object(object_t *obj)
 {
   static bool inspect_quoted = true;
@@ -148,6 +169,25 @@ static void print_object(object_t *obj)
       }
     }
   }
+}
+
+static result_t builtin_cons(object_t *args, environment_t *env, environment_t *global)
+{
+  result_t result;
+  
+  if (!assert_argc(2, args)) { ERROR("Invalid # of args to cons"); }
+
+  result_t a_r = eval(args->value.cons.car, env);
+  result_t b_r = eval(args->value.cons.cdr->value.cons.car, env);
+
+  if (a_r.type == ERR) return a_r;
+  if (b_r.type == ERR) return b_r;
+
+  if (b_r.result.value->type != ATOM ||
+      b_r.result.value->value.atom.type != QUOTED ||
+      b_r.result.value->value.atom.value.quoted->type != CONS) { ERROR("The second argument to cons must be a list"); }
+
+  return new_cons(a_r.result.value, b_r.result.value->value.atom.value.quoted);
 }
 
 static result_t builtin_equal(object_t *args, environment_t *env, environment_t *global)
@@ -245,10 +285,11 @@ object_t _builtin_print      = { .type = ATOM, .value = { .atom = { .type = FUNC
 object_t _builtin_set_global = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_set_global } } } } };
 object_t _builtin_if         = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_if } } } } };
 object_t _builtin_equal      = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_equal } } } } };
+object_t _builtin_cons       = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_cons } } } } };
 
 void insert_builtins(struct environment *env)
 {
-  env_insert(env, "nil", &nil);
+  env_insert(env, "nil", &quoted_nil);
   env_insert(env, "+", &_builtin_add);
   env_insert(env, "-", &_builtin_subtract);
   env_insert(env, "*", &_builtin_multiply);
@@ -257,4 +298,5 @@ void insert_builtins(struct environment *env)
   env_insert(env, "set!", &_builtin_set_global);
   env_insert(env, "if", &_builtin_if);
   env_insert(env, "=", &_builtin_equal);
+  env_insert(env, "cons", &_builtin_cons);
 }
