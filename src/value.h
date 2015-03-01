@@ -54,3 +54,5 @@ typedef struct object {
 
 extern object_t nil;
 extern object_t quoted_nil;
+extern object_t boolean_true;
+extern object_t boolean_false;

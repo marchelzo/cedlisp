@@ -35,6 +35,30 @@ object_t quoted_nil = {
   }
 };
 
+object_t boolean_true = {
+  .type = ATOM,
+  .value = {
+    .atom = {
+      .type = BOOLEAN,
+      .value = {
+        .boolean = true
+      }
+    }
+  }
+};
+
+object_t boolean_false = {
+  .type = ATOM,
+  .value = {
+    .atom = {
+      .type = BOOLEAN,
+      .value = {
+        .boolean = false
+      }
+    }
+  }
+};
+
 
 bool is_keyword(const char *word)
 {
@@ -128,10 +152,21 @@ result_t eval_keyword(const char *kw, object_t *args, environment_t *env)
 
     OKAY(fn);
 
-  } else if (*kw == 'i') {
-    ERROR("NOT IMPLEMENTED");
   } else if (*kw == 's') {
-    ERROR("NOT IMPLEMENTED");
+
+    if (args == &nil) { ERROR("Empty seq construct") }
+
+    result_t val;
+
+    while (1) {
+      if (args == &nil) break;
+      val = eval(args->value.cons.car, env);
+      if (val.type == ERR) return val;
+      args = args->value.cons.cdr;
+    }
+    
+    return val;
+    
   }
   ERROR("Interal interpreter error: eval_keyword called with invalid keyword");
 }
