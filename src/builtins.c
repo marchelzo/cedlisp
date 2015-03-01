@@ -45,7 +45,7 @@ static bool truthy(object_t *obj)
   case REAL: return obj->value.atom.value.real;
   case STRING: return obj->value.atom.value.string[0];
   case BOOLEAN: return obj->value.atom.value.boolean;
-  case QUOTED: return obj != &quoted_nil && obj->value.atom.value.quoted != &nil;
+  case QUOTED: return obj->value.atom.value.quoted != &nil;
   case IDENTIFIER: return true;
   }
 }
@@ -167,9 +167,9 @@ static void print_object(object_t *obj, bool inspect_quoted)
   if (obj->type == CONS) {
   
     putchar('(');
-    while (obj != &nil && obj != &quoted_nil) {
+    while (obj != &nil) {
       print_object(obj->value.cons.car, true);
-      if (obj->value.cons.cdr != &nil && obj->value.cons.cdr != &quoted_nil)
+      if (obj->value.cons.cdr != &nil)
   	putchar(' ');
       obj = obj->value.cons.cdr;
     }
@@ -362,7 +362,7 @@ static result_t builtin_car(object_t *args, environment_t *env, environment_t *g
 
   if (!is_list(cons)) { ERROR("Non-list passed to car"); }
 
-  if (cons == &quoted_nil) { OKAY(cons); }
+  if (cons == &nil) { OKAY(cons); }
 
   return eval(cons->value.atom.value.quoted->value.cons.car, env);
 }
@@ -381,9 +381,10 @@ static result_t builtin_cdr(object_t *args, environment_t *env, environment_t *g
 
   if (!is_list(cons)) { ERROR("Non-list passed to car"); }
 
-  if (cons == &quoted_nil) { OKAY(cons); }
+  if (cons == &nil) { OKAY(cons); }
 
-  return new_quoted(cons->value.atom.value.quoted->value.cons.cdr);
+  if (cons->value.atom.value.quoted->value.cons.cdr == &nil) { OKAY(&nil); }
+  else return new_quoted(cons->value.atom.value.quoted->value.cons.cdr);
 }
 
 static result_t builtin_equal(object_t *args, environment_t *env, environment_t *global)
@@ -473,7 +474,7 @@ static result_t builtin_print(object_t *args, environment_t *env, environment_t 
   if (args->value.cons.cdr != &nil)
     return builtin_print(args->value.cons.cdr, env, global);
   else
-    return (result_t) { .type = OK, .result = { .value = &quoted_nil } };
+    return (result_t) { .type = OK, .result = { .value = &nil } };
 }
 
 static result_t builtin_add(object_t *args, environment_t *env, environment_t *global)
@@ -503,7 +504,7 @@ static result_t builtin_set_global(object_t *args, environment_t *env, environme
   result_t val = eval(args->value.cons.cdr->value.cons.car, env);
   if (val.type == ERR) return val;
   env_update_or_insert_local(global, args->value.cons.car->value.atom.value.identifier, val.result.value);
-  OKAY(&quoted_nil);
+  OKAY(&nil);
 }
 
 static result_t builtin_set_local(object_t *args, environment_t *env, environment_t *global)
@@ -513,7 +514,7 @@ static result_t builtin_set_local(object_t *args, environment_t *env, environmen
   result_t val = eval(args->value.cons.cdr->value.cons.car, env);
   if (val.type == ERR) return val;
   env_update_or_insert_local(env, args->value.cons.car->value.atom.value.identifier, val.result.value);
-  OKAY(&quoted_nil);
+  OKAY(&nil);
 }
 
 
@@ -539,7 +540,7 @@ object_t _builtin_list         = { .type = ATOM, .value = { .atom = { .type = FU
 
 void insert_builtins(struct environment *env)
 {
-  env_insert(env, "nil", &quoted_nil);
+  env_insert(env, "nil", &nil);
   env_insert(env, "!", &_builtin_not);
   env_insert(env, "+", &_builtin_add);
   env_insert(env, "-", &_builtin_subtract);
