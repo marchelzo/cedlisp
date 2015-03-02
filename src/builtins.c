@@ -223,6 +223,51 @@ static void print_object(object_t *obj, bool inspect_quoted)
   }
 }
 
+static result_t builtin_defun(object_t *args, environment_t *env, environment_t *global)
+{
+  result_t result;
+
+  if (!assert_argc(3, args)) { ERROR("Invalid syntax in defun expression"); }
+
+  /* get the function name (identifier) */
+  if (args->value.cons.car->type != ATOM || args->value.cons.car->value.atom.type != IDENTIFIER) {
+    ERROR("Missing identifier in defun expression");
+  }
+  const char *fn_name = args->value.cons.car->value.atom.value.identifier;
+
+  /* advance to the next argument (the argument list) */
+  args = args->value.cons.cdr;
+
+  /* parse the argument list */
+  if (args->value.cons.car->type != CONS) { ERROR("Missing argument list in defun expression"); }
+
+  object_t *fn = malloc(sizeof *fn);
+  if (!fn) { ERROR("Out of memory!"); }
+  fn->type = ATOM;
+  fn->value.atom.type = FUNCTION;
+  fn->value.atom.value.function.builtin = NULL;
+  fn->value.atom.value.function.argc = 0;
+  fn->value.atom.value.function.env = env_new(env);
+
+  object_t *arg_list = args->value.cons.car;
+
+  while (arg_list != &nil) {
+    if (arg_list->value.cons.car->type != ATOM ||
+        arg_list->value.cons.car->value.atom.type != IDENTIFIER) { ERROR("Non-identifier in argument list of defun expression"); }
+    fn->value.atom.value.function.argv[fn->value.atom.value.function.argc++] = arg_list->value.cons.car->value.atom.value.identifier;
+    arg_list = arg_list->value.cons.cdr;
+  }
+
+  /* move the the last argument (function body) */
+  args = args->value.cons.cdr;
+
+  fn->value.atom.value.function.body = args->value.cons.car;
+
+  env_update_or_insert_local(env, fn_name, fn);
+
+  OKAY(&nil);
+}
+
 static result_t builtin_cond(object_t *args, environment_t *env, environment_t *global)
 {
   result_t result;
@@ -735,6 +780,7 @@ object_t _builtin_cdr          = { .type = ATOM, .value = { .atom = { .type = FU
 object_t _builtin_eval         = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_eval } } } } };
 object_t _builtin_list         = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_list } } } } };
 object_t _builtin_cond         = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_cond } } } } };
+object_t _builtin_defun        = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_defun } } } } };
 
 void insert_builtins(struct environment *env)
 {
@@ -766,4 +812,5 @@ void insert_builtins(struct environment *env)
   env_insert(env, "eval", &_builtin_eval);
   env_insert(env, "list", &_builtin_list);
   env_insert(env, "cond", &_builtin_cond);
+  env_insert(env, "defun", &_builtin_defun);
 }
