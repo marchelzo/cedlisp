@@ -1,0 +1,56 @@
+(set! map (fn (f xs)
+              (if (nil? xs)
+                  nil
+                  (cons (f (car xs)) (map f (cdr xs))))))
+
+(set! fold (fn (f x xs)
+               (if (nil? xs)
+                   x
+                   (fold f (f x (car xs)) (cdr xs)))))
+
+(set! >= (fn (a b) (or (= a b)
+                       (> a b))))
+
+(set! <= (fn (a b) (or (= a b)
+                       (< a b))))
+
+(set! max (fn (a b) (if (> a b) a b)))
+
+(set! min (fn (a b) (if (< a b) a b)))
+
+(set! range (fn (n)
+                (seq (set go (fn (k) (if (> k n)
+                                         nil
+                                         (cons k
+                                               (go (+ k 1))))))
+                      (go 1))))
+
+
+(set! println (fn (e) (print e "\n")))
+
+(set! take (fn (n xs)
+               (if (or (nil? xs) (= n 0))
+                   nil
+                   (cons (car xs)
+                         (take (- n 1) (cdr xs))))))
+
+(set! drop (fn (n xs)
+               (if (or (nil? xs) (= n 0))
+                   xs
+                   (drop (- n 1) (cdr xs)))))
+
+(set! filter (fn (pred xs)
+                 (if (nil? xs)
+                     nil
+                     (if (pred (car xs))
+                         (cons (car xs) (filter pred (cdr xs)))
+                         (filter (pred (cdr xs)))))))
+
+(set! idx (fn (i xs)
+              (if (or (nil? xs) (= i 0))
+                  (car xs)
+                  (idx (- i 1) (cdr xs)))))
+
+(set! sum (fn (ns) (fold + 0 ns)))
+
+(set! product (fn (ns) (fold * 0 ns)))
