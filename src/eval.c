@@ -12,6 +12,10 @@
 
 environment_t *global_env = NULL;
 
+const char *error_message = NULL;
+
+object_t **parse_program(const char *source); /* forward declaration */
+
 char *initial_addr;
 long long int max_stack_size;
 
@@ -209,6 +213,39 @@ void set_max_stack_usage(long long int bytes)
   max_stack_size = bytes;
 }
 
+bool init(long long int stack_size)
+{
+  global_env = env_new(NULL);
+  if (!global_env) {
+    error_message = "Failed to initialize global environment";
+    return false;
+  }
+
+  insert_builtins(global_env);
+  max_stack_size = stack_size;
+
+  return true;
+}
+
+bool evaluate(const char *s)
+{
+  object_t **expressions = parse_program(s);
+  if (!expressions) {
+    error_message = "Bad syntax";
+    return false;
+  }
+
+  while (*expressions) {
+    result_t val = eval(*expressions, global_env);
+    if (val.type == ERR) {
+      error_message = val.result.error;
+      return false;
+    }
+    expressions += 1;
+  }
+  
+  return true;
+}
 
 result_t eval_program(object_t **program, long long int max_stack_usage)
 {

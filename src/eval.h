@@ -25,4 +25,7 @@ typedef struct result {
 
 result_t eval_program(object_t **program, long long int max_stack_usage);
 result_t eval(object_t *program, struct environment *env);
-void set_max_stack_usage(long long int bytes);
+bool init(long long int bytes);
+bool evaluate(const char *code);
+
+extern const char *error_message;
