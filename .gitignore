@@ -1,0 +1,6 @@
+*.o
+*.swp
+src/*.o
+test
+ced
+*.dSYM
