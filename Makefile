@@ -10,7 +10,7 @@ release: CFLAGS += -O2
 release: ced
 
 repl: repl.c
-	$(CC) $(CFLAGS) -o $@ $< src/eval.o src/parser.o src/environment.o src/builtins.o -lreadline
+	$(CC) $(CFLAGS) -o $@ $< src/eval.o src/ced.o src/parser.o src/environment.o src/builtins.o -lreadline
 
 ced: $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $(OBJECTS)

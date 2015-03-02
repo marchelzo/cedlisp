@@ -53,4 +53,4 @@
 
 (set! sum (fn (ns) (fold + 0 ns)))
 
-(set! product (fn (ns) (fold * 0 ns)))
+(set! product (fn (ns) (fold * 1 ns)))

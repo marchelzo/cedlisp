@@ -658,6 +658,16 @@ static result_t builtin_print(object_t *args, environment_t *env, environment_t 
     return (result_t) { .type = OK, .result = { .value = &nil } };
 }
 
+static result_t builtin_println(object_t *args, environment_t *env, environment_t *global)
+{
+  result_t val = builtin_print(args, env, global);
+  if (val.type == ERR) return val;
+
+  putchar('\n');
+
+  return val;
+}
+
 static result_t builtin_add(object_t *args, environment_t *env, environment_t *global)
 {
   BINOP(+)
@@ -708,6 +718,7 @@ object_t _builtin_subtract     = { .type = ATOM, .value = { .atom = { .type = FU
 object_t _builtin_multiply     = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_multiply } } } } };
 object_t _builtin_divide       = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_divide } } } } };
 object_t _builtin_print        = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_print } } } } };
+object_t _builtin_println      = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_println } } } } };
 object_t _builtin_set_global   = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_set_global } } } } };
 object_t _builtin_set_local    = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_set_local } } } } };
 object_t _builtin_if           = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_if } } } } };
@@ -738,6 +749,7 @@ void insert_builtins(struct environment *env)
   env_insert(env, "*", &_builtin_multiply);
   env_insert(env, "/", &_builtin_divide);
   env_insert(env, "print", &_builtin_print);
+  env_insert(env, "println", &_builtin_println);
   env_insert(env, "set!", &_builtin_set_global);
   env_insert(env, "set", &_builtin_set_local);
   env_insert(env, "if", &_builtin_if);

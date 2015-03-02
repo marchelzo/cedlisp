@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
   static char expr[4096];
   static char lib[8192];
 
-  ced_init(1000000);
+  ced_init(100);
 
   while (1) {
 
