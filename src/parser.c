@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <setjmp.h>
 
 #include "parser.h"
 #include "value.h"
@@ -64,19 +65,34 @@ object_t *parse_list(const char **source)
   list->value.cons.car = parse_object(source);
   if (!list->value.cons.car) {
     free(list);
-    return &nil;
+    if (**source == ')')
+      return &nil;
+    else
+      return NULL;
   }
+
   if (isspace(**source)) {
     skip_spaces(source);
     list->value.cons.cdr = parse_list(source);
+    if (!list->value.cons.cdr) return NULL;
   } else {
-    list->value.cons.cdr = &nil;
+    if (**source == ')')
+      list->value.cons.cdr = &nil;
+    else {
+      free(list);
+      return NULL;
+    }
   }
   return list;
 }
 
 object_t *parse_object(const char **source)
 {
+
+  skip_spaces(source);
+  
+  if (!**source) return NULL;
+
   object_t *obj = malloc(sizeof *obj);
   if (!obj) return NULL;
   
@@ -169,6 +185,7 @@ object_t **parse_program(const char *source)
 
   while (*source) {
     program[n++] = parse_object(&source);
+    if (!program[n-1]) return NULL;
 
     /* skip whitespace */
     while (*source && isspace(*source)) ++source;

@@ -1,6 +1,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stddef.h>
+#include <sys/resource.h>
+#include <unistd.h>
 
 #include "eval.h"
 #include "value.h"
@@ -8,7 +12,10 @@
 
 environment_t *global_env = NULL;
 
-const char *keywords[] = {
+char *initial_addr;
+long long int max_stack_size;
+
+static const char *keywords[] = {
   "fn",
   "seq"
 };
@@ -19,18 +26,6 @@ object_t nil = {
     .cons = {
       .car = NULL,
       .cdr = NULL
-    }
-  }
-};
-
-object_t quoted_nil = {
-  .type = ATOM,
-  .value = {
-    .atom = {
-      .type = QUOTED,
-      .value = {
-	.quoted = &nil
-      }
     }
   }
 };
@@ -60,7 +55,7 @@ object_t boolean_false = {
 };
 
 
-bool is_keyword(const char *word)
+static bool is_keyword(const char *word)
 {
   static size_t N = sizeof keywords / sizeof keywords[0];
   for (size_t i = 0; i < N; ++i)
@@ -73,8 +68,14 @@ result_t eval_function(object_t *fn, object_t *args, environment_t *env);
 
 result_t eval(object_t *expr, environment_t *env)
 {
+
   result_t result;
-  
+
+  char c;
+
+  ptrdiff_t stack_size = initial_addr - &c;
+  if (stack_size + 512 > max_stack_size) { ERROR("Maximum recursion depth exceeded"); }
+
   if (expr->type == ATOM) {
     if (expr->value.atom.type == IDENTIFIER) {
       object_t *val = env_lookup(env, expr->value.atom.value.identifier);
@@ -117,6 +118,7 @@ result_t eval(object_t *expr, environment_t *env)
 result_t eval_keyword(const char *kw, object_t *args, environment_t *env)
 {
   result_t result;
+
   
   if (*kw == 'f') {
 
@@ -173,11 +175,13 @@ result_t eval_keyword(const char *kw, object_t *args, environment_t *env)
 
 result_t eval_function(object_t *fn, object_t *args, environment_t *env)
 {
-
-  if (fn->value.atom.value.function.builtin)
-    return fn->value.atom.value.function.builtin(args, env, global_env);
-  
   result_t result;
+
+
+
+  if (fn->value.atom.value.function.builtin) {
+    return fn->value.atom.value.function.builtin(args, env, global_env);
+  }
 
   /* parse and evaluate the arguments to the function */
   size_t n = 0; /* number of arguments */
@@ -200,8 +204,13 @@ result_t eval_function(object_t *fn, object_t *args, environment_t *env)
   return eval(fn->value.atom.value.function.body, call_env);
 }
 
+void set_max_stack_usage(long long int bytes)
+{
+  max_stack_size = bytes;
+}
 
-result_t eval_program(object_t **program)
+
+result_t eval_program(object_t **program, long long int max_stack_usage)
 {
   result_t result;
 
@@ -217,6 +226,10 @@ result_t eval_program(object_t **program)
   if (!*program || !program) {
     ERROR("Nothing to evaluate!")
   }
+
+  char c;
+  initial_addr = &c;
+  max_stack_size = max_stack_usage;
   
   while (*program) {
 

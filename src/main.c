@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 
 #include "parser.h"
 #include "value.h"
@@ -31,7 +32,16 @@ int main(int argc, char *argv[])
 
   object_t **program = parse_program(program_source);
 
-  result_t result = eval_program(program);
+  struct rlimit stack_size;
+
+  getrlimit(RLIMIT_STACK, &stack_size);
+  
+  stack_size.rlim_cur = stack_size.rlim_max;
+
+  setrlimit(RLIMIT_STACK, &stack_size);
+
+
+  result_t result = eval_program(program, stack_size.rlim_max);
 
   if (result.type == ERR)
     puts(result.result.error);

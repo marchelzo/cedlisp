@@ -10,6 +10,8 @@
                   result.result.value = (val); \
 		  return result;
 
+struct environment;
+
 typedef struct result {
   enum {
     OK,
@@ -21,4 +23,6 @@ typedef struct result {
   } result;
 } result_t;
 
-result_t eval_program(object_t **program);
+result_t eval_program(object_t **program, long long int max_stack_usage);
+result_t eval(object_t *program, struct environment *env);
+void set_max_stack_usage(long long int bytes);
