@@ -2,7 +2,7 @@ SOURCES := $(wildcard src/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
 CC := clang
-CFLAGS := -std=c99 -g -Wall -Wextra -pedantic
+CFLAGS := -std=c11 -g -Wall -Wextra -pedantic
 
 all: ced repl
 
