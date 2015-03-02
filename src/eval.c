@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
-#include <sys/resource.h>
-#include <unistd.h>
 
 #include "eval.h"
 #include "value.h"

@@ -5,11 +5,7 @@
 #include <signal.h>
 #include <readline/readline.h>
 
-#include "src/parser.h"
-#include "src/value.h"
-#include "src/eval.h"
-#include "src/environment.h"
-#include "src/builtins.h"
+#include "src/ced.h"
 
 void _Noreturn goodbye(int k)
 {
@@ -26,7 +22,7 @@ int main(int argc, char *argv[])
   static char expr[4096];
   static char lib[8192];
 
-  init(1000000);
+  ced_init(1000000);
 
   while (1) {
 
@@ -45,8 +41,8 @@ int main(int argc, char *argv[])
       lib[n] = 0;
       fclose(f);
 
-      if (!evaluate(lib)) {
-        printf("Error reading file: %s", error_message);
+      if (!ced_eval(lib)) {
+        printf("Error reading file: %s", ced_error());
         break;
       }
       continue;
@@ -54,8 +50,8 @@ int main(int argc, char *argv[])
 
     snprintf(expr, 4095, "(print %s \"\\n\")", line);
 
-    if (!evaluate(expr))
-      printf("Error: %s\n", error_message);
+    if (!ced_eval(expr))
+      printf("Error: %s\n", ced_error());
 
     add_history(line);
   }
