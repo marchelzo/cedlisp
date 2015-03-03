@@ -1,6 +1,6 @@
 # cedlisp
 
-Build the REPL and the interpreter (Note: required GNU readline and GNU make) :
+Build the REPL and the interpreter (Note: requires GNU readline and GNU make) :
 
 `$ make release`
 
