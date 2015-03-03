@@ -7,7 +7,7 @@ CFLAGS := -std=c11 -g -Wall -Wextra -pedantic
 all: ced repl
 
 release: CFLAGS += -O2
-release: ced
+release: ced repl
 
 repl: repl.c
 	$(CC) $(CFLAGS) -o $@ $< src/eval.o src/ced.o src/parser.o src/environment.o src/builtins.o -lreadline
