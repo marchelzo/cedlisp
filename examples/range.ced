@@ -1,0 +1,6 @@
+(defun range (k) (seq (defun go (n) (if (> n k) nil (cons n (go (+ n 1)))))
+                      (go 1)))
+
+(set nums (range 15))
+(println "The numbers from 1 to 15: " nums)
+(println "And backwards: " (rev nums))

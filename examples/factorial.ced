@@ -1,0 +1,6 @@
+(defun factorial (k)
+                 (if (= k 0)
+                     1
+                     (* k (factorial (- k 1)))))
+
+(println "8! = " (factorial 8))
