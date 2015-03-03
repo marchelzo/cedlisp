@@ -38,3 +38,5 @@ Ctrl + C to quit:
 Goodbye!
 ```
 
+
+For more, see the examples in the `examples` directory.
