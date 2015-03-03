@@ -462,6 +462,66 @@ static result_t builtin_is_nil(object_t *args, environment_t *env, environment_t
   return new_boolean(arg.result.value == &nil);
 }
 
+static result_t builtin_cat(object_t *args, environment_t *env, environment_t *global)
+{
+  result_t result;
+
+  if (!assert_argc(2, args)) { ERROR("Invalid # of args to cat"); }
+
+  result_t one = eval(args->value.cons.car, env);
+  result_t two = eval(args->value.cons.cdr->value.cons.car, env);
+
+  if (one.type == ERR) return one;
+  if (two.type == ERR) return two;
+  
+  object_t *seq1 = one.result.value;
+  object_t *seq2 = two.result.value;
+
+  if (seq1 == &nil) return two;
+  if (seq2 == &nil) return one;
+
+  if (!is_list(seq1)) { ERROR("Non-list as first argument to cat") }
+  if (!is_list(seq2)) { ERROR("Non-list as second argument to cat") }
+
+  seq1 = seq1->value.atom.value.quoted;
+  seq2 = seq2->value.atom.value.quoted;
+
+  object_t *list = malloc(sizeof *list);
+  if (!list) { ERROR("Out of memory!"); }
+
+  list->type = CONS;
+
+  object_t *current = list;
+
+  while (seq1 != &nil) {
+    result_t elem = eval(seq1->value.cons.car, env);
+    if (elem.type == ERR) return elem;
+    current->value.cons.car = elem.result.value;
+    seq1 = seq1->value.cons.cdr;
+    current->value.cons.cdr = malloc(sizeof *list);
+    if (!current->value.cons.cdr) { ERROR("Out of memory!"); }
+    current->value.cons.cdr->type = CONS;
+    current = current->value.cons.cdr;
+  }
+
+  while (1) {
+    result_t elem = eval(seq2->value.cons.car, env);
+    if (elem.type == ERR) return elem;
+    current->value.cons.car = elem.result.value;
+    seq2 = seq2->value.cons.cdr;
+    if (seq2 == &nil) {
+      current->value.cons.cdr = &nil;
+      break;
+    }
+    current->value.cons.cdr = malloc(sizeof *list);
+    if (!current->value.cons.cdr) { ERROR("Out of memory!"); }
+    current->value.cons.cdr->type = CONS;
+    current = current->value.cons.cdr;
+  }
+
+  return new_quoted(list);
+}
+
 static result_t builtin_len(object_t *args, environment_t *env, environment_t *global)
 {
   result_t result;
@@ -773,6 +833,7 @@ object_t _builtin_greater_than = { .type = ATOM, .value = { .atom = { .type = FU
 object_t _builtin_less_than    = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_less_than } } } } };
 object_t _builtin_cons         = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_cons } } } } };
 object_t _builtin_rev          = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_rev } } } } };
+object_t _builtin_cat          = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_cat } } } } };
 object_t _builtin_len          = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_len } } } } };
 object_t _builtin_is_nil       = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_is_nil } } } } };
 object_t _builtin_car          = { .type = ATOM, .value = { .atom = { .type = FUNCTION, .value = { .function = { .builtin = builtin_car } } } } };
@@ -804,6 +865,7 @@ void insert_builtins(struct environment *env)
   env_insert(env, ">", &_builtin_greater_than);
   env_insert(env, "<", &_builtin_less_than);
   env_insert(env, "rev", &_builtin_rev);
+  env_insert(env, "cat", &_builtin_cat);
   env_insert(env, "len", &_builtin_len);
   env_insert(env, "nil?", &_builtin_is_nil);
   env_insert(env, "cons", &_builtin_cons);

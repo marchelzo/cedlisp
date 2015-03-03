@@ -26,8 +26,6 @@
                       (go 1))))
 
 
-(set! println (fn (e) (print e "\n")))
-
 (set! take (fn (n xs)
                (if (or (nil? xs) (= n 0))
                    nil
@@ -54,3 +52,27 @@
 (set! sum (fn (ns) (fold + 0 ns)))
 
 (set! product (fn (ns) (fold * 1 ns)))
+
+
+(defun zip (xs ys)
+           (if (or (nil? xs) (nil? ys))
+               nil
+               (cons (list (car xs) (car ys)) (zip (cdr xs) (cdr ys)))))
+
+(defun zip-with (f xs ys)
+                (if (or (nil? xs) (nil? ys))
+                    nil
+                    (cons (f (car xs) (car ys)) (zip-with f (cdr xs) (cdr ys)))))
+
+(defun zip-with-3 (f xs ys zs)
+                  (if (or (nil? xs) (nil? ys) (nil? zs))
+                      nil
+                      (cons (f (car xs) (car ys) (car zs)) (zip-with-3 f (cdr xs) (cdr ys) (cdr zs)))))
+
+(defun each (f xs)
+            (seq (defun go (i ys)
+                           (if (nil? ys)
+                               nil
+                               (seq (f i (car ys))
+                                    (go (+ i 1) (cdr ys)))))
+                 (go 0 xs)))
