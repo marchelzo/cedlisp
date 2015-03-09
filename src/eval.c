@@ -258,7 +258,7 @@ result_t eval_program(object_t **program, long long int max_stack_usage)
   insert_builtins(global_env);
 
 
-  if (!*program || !program) {
+  if (!program || !*program) {
     ERROR("Nothing to evaluate!")
   }
 
