@@ -4,6 +4,10 @@ Build the REPL and the interpreter (Note: requires GNU readline and GNU make) :
 
 `$ make release`
 
+Run some example programs:
+
+`chmod +x run_examples.sh && ./run_examples.sh`
+
 Launch the REPL:
 
 `$ ./repl`
